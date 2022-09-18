@@ -4,7 +4,7 @@
  * Show automatically-started download progress
  * 
  * By garywill (https://garywill.github.io)
- * Tested on Firefox 91
+ * Tested on Firefox 102
  * 
  * Modified from:
  *   https://www.firefox.net.cn/read-121336-2  
@@ -77,7 +77,7 @@ console.log("dl_ask_dialog_add_external.uc.js");
                 
                 var percent = Math.floor(downloaded_size/dialog.mLauncher.contentLength * 100);
                 
-                info_text.textContent = `${percent} % 　  ${downloaded_size} / ${dialog.mLauncher.contentLength} / ${space_avai}`
+                info_text.textContent = `${percent}% ${memoryAddUnit(downloaded_size)} / ${memoryAddUnit(dialog.mLauncher.contentLength)}  (${downloaded_size} / ${dialog.mLauncher.contentLength}) Space: ${memoryAddUnit(space_avai)}`
                 progress.style.width = percent+"%";
                 
             }, 300);
@@ -87,11 +87,15 @@ console.log("dl_ask_dialog_add_external.uc.js");
         createExtraAppButton:function () {
             let btn = dialogElement.getButton("extra2");
             if(btn){
-                btn.setAttribute("hidden", "false");
                 btn.setAttribute("label", config.extraAppName);
                 btn.addEventListener("click", function() { 
-                    window.MDownloadPlus.lauchExtraApp(); 
+                    var r = window.MDownloadPlus.lauchExtraApp(); 
+                    if (r)
+                        dialogElement.getButton("cancel").click();
+                    else
+                        alert("Something was wrong when tried to launch extra doenload app");
                 });
+                btn.setAttribute("hidden", "false");
             }
         },
         lauchExtraApp:function () {
@@ -100,7 +104,7 @@ console.log("dl_ask_dialog_add_external.uc.js");
             let regEx = new RegExp("^data:");
             if (regEx.test(url)) {
                 alert("This link doesn't support external downloader");
-                return;
+                return false;
             }
             
             
@@ -109,7 +113,7 @@ console.log("dl_ask_dialog_add_external.uc.js");
             extraApp.initWithPath(config.extraAppPath);
             if (!extraApp.exists()) {
                 alert(config.extraAppName+ "Can not find " + config.extraAppPath);
-                return;
+                return false;
             }
             
             let commandArgs = config.extraAppParameter.replace("pw_url", url).split(" ");;
@@ -119,8 +123,9 @@ console.log("dl_ask_dialog_add_external.uc.js");
             p.init(extraApp);
             p.run(false, commandArgs, commandArgs.length);
             
-            dialog.mDialog.dialog = null;
-            window.close();
+            return true;
+//             dialog.mDialog.dialog = null;
+//             window.close();
         },
 
 
@@ -149,4 +154,24 @@ console.log("dl_ask_dialog_add_external.uc.js");
         MDownloadPlus.init();
         window.MDownloadPlus = MDownloadPlus;
     }
-})()
+    
+    function memoryAddUnit(memory) {
+        let unit = "";
+        let mem_united = "?";
+        if (memory) {
+            unit = "kB";
+            mem_united = Math.ceil(memory / 1024);
+            if (mem_united > 1024) {
+                mem_united = Math.ceil((mem_united / 1024) * 10) / 10;
+                unit = "MB";
+                if (mem_united > 1024) {
+                    mem_united = Math.ceil((mem_united / 1024) * 100) / 100;
+                    unit = "GB";
+                }
+            }
+            mem_united += unit;
+        }
+        return mem_united;
+    }
+    
+})();
