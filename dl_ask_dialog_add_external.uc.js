@@ -4,7 +4,7 @@
  * Show automatically-started download progress
  * 
  * By garywill (https://garywill.github.io)
- * Tested on Firefox 102
+ * Tested on Firefox 128
  * 
  * Modified from:
  *   https://www.firefox.net.cn/read-121336-2  
@@ -14,6 +14,7 @@
 // ==UserScript==
 // @include     chrome://mozapps/content/downloads/unknownContentType.xhtml
 // ==/UserScript==
+
 
 console.log("dl_ask_dialog_add_external.uc.js");
     
@@ -44,12 +45,16 @@ console.log("dl_ask_dialog_add_external.uc.js");
             filepath_box.style.outline = 0;
             filepath_box.style.margin = 0;
             filepath_box.style.padding = 0;
+            filepath_box.style.whiteSpace = "nowrap";
+            filepath_box.style.fontSize = "7px";
             
             let info = document.createXULElement("div");
             info.style.display = "block";
             info.style.position = "relative";
+            info.style.fontSize = "10px";
             
             let info_text = document.createXULElement("div");
+            info_text.style.whiteSpace = "nowrap";
             
             
             var progress = document.createXULElement("div");
@@ -71,14 +76,24 @@ console.log("dl_ask_dialog_add_external.uc.js");
                 
                 var filepath = targetFile.path ? targetFile.path : targetFile.persistentDescriptor;
                 var downloaded_size = targetFile.fileSize !== undefined ? targetFile.fileSize : targetFile.fileSizeOfLink;
+                var networkFile_size = dialog.mLauncher.contentLength; 
                 var space_avai = targetFile.diskSpaceAvailable;
                 
                 filepath_box.value = filepath;
                 
-                var percent = Math.floor(downloaded_size/dialog.mLauncher.contentLength * 100);
+                var percent; 
+                var disp_networkFile_size ;
+                if (networkFile_size > 0)
+                {
+                    disp_networkFile_size = memoryAddUnit(networkFile_size);
+                    percent = Math.floor(downloaded_size/dialog.mLauncher.contentLength * 100);
+                    progress.style.width = percent+"%";
+                }else {
+                    disp_networkFile_size = '?'; 
+                    percent = '?'; 
+                }
                 
-                info_text.textContent = `${percent}% ${memoryAddUnit(downloaded_size)} / ${memoryAddUnit(dialog.mLauncher.contentLength)}  (${downloaded_size} / ${dialog.mLauncher.contentLength}) Space: ${memoryAddUnit(space_avai)}`
-                progress.style.width = percent+"%";
+                info_text.textContent = `${percent}% ${memoryAddUnit(downloaded_size)} / ${disp_networkFile_size}  (${convertToSuperscript(downloaded_size)} / ${convertToSuperscript(dialog.mLauncher.contentLength)}) Space: ${memoryAddUnit(space_avai)}`
                 
             }, 300);
             
@@ -173,5 +188,30 @@ console.log("dl_ask_dialog_add_external.uc.js");
         }
         return mem_united;
     }
-    
+    function convertToSuperscript(str) {  
+        str = str.toString();
+        const superscriptMap = {  
+            '0': '⁰',  
+            '1': '¹',  
+            '2': '²',  
+            '3': '³',  
+            '4': '⁴',  
+            '5': '⁵',  
+            '6': '⁶',  
+            '7': '⁷',  
+            '8': '⁸',  
+            '9': '⁹'  
+        };  
+        
+        let result = '';  
+        for (let char of str) {  
+            if (superscriptMap.hasOwnProperty(char)) {  
+                result += superscriptMap[char];  
+            } else {  
+                result += char;  
+            }  
+        }  
+        
+        return result;  
+    }  
 })();
