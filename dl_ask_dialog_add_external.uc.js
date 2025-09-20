@@ -4,7 +4,7 @@
  * Show automatically-started download progress
  * 
  * By garywill (https://garywill.github.io)
- * Tested on Firefox 128
+ * Tested on Firefox 140
  * 
  * Modified from:
  *   https://www.firefox.net.cn/read-121336-2  
