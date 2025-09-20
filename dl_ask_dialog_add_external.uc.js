@@ -22,17 +22,42 @@ console.log("dl_ask_dialog_add_external.uc.js");
     let config = {
         extraAppName: "uGet",   // external downloader display name
         extraAppPath: "/usr/bin/uget-gtk",  // path to external downloader executable file // NOTICE
-        extraAppParameter: "pw_url",    // command arguments  // TODO cookie, referer ...
+        // extraAppPath: "/usr/bin/xmessage",
     };
     
+    function extraAppParamsArrGenerator(app, dlurl, useragent, referer, cookie, postdata, proxy) {
+        // dlurl useragent  referer  cookie  postdata : string
+        // proxy : bool
+        let result_arr = [];
+
+        if (app == 'uget')
+        {
+            if (useragent)
+                result_arr = result_arr.concat([`--http-user-agent=${useragent}`]);
+
+            if (referer)
+                result_arr = result_arr.concat([`--http-referer=${referer}`]);
+
+            if (cookie)
+                result_arr = result_arr.concat([`--http-cookie-data=${cookie}`]);
+
+            if (proxy)
+            {
+            }
+
+            if (postdata)
+                result_arr = result_arr.concat([`--http-post-data=${postdata}`]);
+
+            result_arr = result_arr.concat([dlurl]);
+        }
+        return result_arr;
+    }
+
     const dialogElement = document.documentElement.getButton ?
                             document.documentElement : 
                             document.getElementById('unknownContentType');
     
     
-    var downloadModule = {}; // ?
-    Components.utils.import("resource://gre/modules/DownloadLastDir.jsm", downloadModule); // ?
-    Components.utils.import("resource://gre/modules/Downloads.jsm");
     var MDownloadPlus = {
         showAutoDlInfo: function() {
             let hbox = document.createXULElement("div");
@@ -131,7 +156,8 @@ console.log("dl_ask_dialog_add_external.uc.js");
                 return false;
             }
             
-            let commandArgs = config.extraAppParameter.replace("pw_url", url).split(" ");;
+            let ua_use = window.navigator.userAgent;
+            let commandArgs = extraAppParamsArrGenerator('uget', url, ua_use, null, null, null, false);
             
             let p = Components.classes["@mozilla.org/process/util;1"]
                     .createInstance(Components.interfaces.nsIProcess);
@@ -166,8 +192,15 @@ console.log("dl_ask_dialog_add_external.uc.js");
     }
         
     if (location.href.startsWith("chrome://mozapps/content/downloads/unknownContentType.x")) {
-        MDownloadPlus.init();
-        window.MDownloadPlus = MDownloadPlus;
+        if (UC_API)
+            UC_API.Runtime.startupFinished().then(start);
+        else
+            start();
+
+        async function start() {
+            MDownloadPlus.init();
+            window.MDownloadPlus = MDownloadPlus;
+        }
     }
     
     function memoryAddUnit(memory) {
